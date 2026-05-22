@@ -281,9 +281,9 @@ if use_realtime and ticker:
             st.sidebar.success(f"✅ Đã kết nối Đám mây. Sàn: {auto_date}")
             default_date = auto_date
         else:
-            st.sidebar.warning(f"⚠️ Không có dữ liệu yfinance cho {ticker}")
+            st.sidebar.warning(f"⚠️ {ticker} không có trên yfinance (Thường do thuộc sàn HNX/UPCoM). Vui lòng nhập ngày lên sàn thủ công.")
     except Exception:
-        st.sidebar.warning(f"⚠️ Lỗi kết nối yfinance cho {ticker}")
+        st.sidebar.warning(f"⚠️ Lỗi kết nối yfinance cho {ticker}. Vui lòng nhập tay.")
 
 industry_options = list(INDUSTRY_MAPPING.keys()) + ["Khác"]
 ind_index = industry_options.index(default_ind) if default_ind in industry_options else len(industry_options)-1
@@ -449,24 +449,13 @@ if st.sidebar.button("Phân Tích Cổ Phiếu", type="primary", use_container_w
         
     st.markdown("**LỚP 2 - TẦM NHÌN LƯU NGUYỆT 3 THÁNG:** *(Chi tiết bảng chiến lược bên dưới - So găng Ngành/Doanh nghiệp với Hành Cụm Tháng)*")
     
-    with st.expander("📚 BÍ KÍP ĐỌC TRẬN ĐỒ: MÔ HÌNH TÀI CHÍNH HÀNH VI ĐỊNH LƯỢNG (CLICK ĐỂ XEM)"):
-        if "Down-trend" in market_mode:
-            st.markdown("""
-            **🔍 MÔI TRƯỜNG VĨ MÔ YẾU (Thiếu Thanh Khoản):**
-            *   **🛑 CẮT MÁU / THÁO CHẠY:** Quẻ Tháng **HUNG**. Thị trường yếu + Tin xấu = Gãy thật, thủng đáy. Tuyệt đối không bắt đáy.
-            *   **✅ MUA GOM DEEP VALUE:** Quẻ Tháng **CÁT** + Nạp âm **TỬ / THÔI**. Nội lực tốt nhưng giá bị ép xuống cực đại (kiệt cung). Chờ bật chữ V.
-            *   **⚠️ PHÂN PHỐI ĐỈNH:** Nạp âm **VƯỢNG**. Mọi kỳ vọng tốt nhất đã ra (Priced-in), hết động lực tăng giá.
-            *   **🛡️ TRÚ ẨN BẢO TOÀN:** Ngành **TƯỚNG**. Ngành được Vĩ mô bơm máu, phòng thủ an toàn trong giông bão.
-            """)
-        else:
-            st.markdown("""
-            **🚀 MÔI TRƯỜNG VĨ MÔ MẠNH (Thừa Thanh Khoản):**
-            *   **🌪️ BẪY RŨ BỎ / MÚC BUY-THE-DIP:** Quẻ Tháng **HUNG**. Sập chớp nhoáng (Liquidity Shock) rũ sạch Margin rồi kéo trần V-shape. Cơ hội bắt đáy sinh lời lớn nhất.
-            *   **🔥 SIÊU ĐẦU CƠ TỐI ĐA ALPHA:** Quẻ Tháng **CÁT** + Nạp âm **TỬ / THÔI**. Lõi tốt nén chặt, bung nổ nhờ tiền rẻ.
-            *   **🚀 NGÀNH HÚT MÁU / DẪN SÓNG:** Ngành **TÙ**. Ngành lấy nguồn lực từ vĩ mô để mở rộng bong bóng.
-            *   **⚠️ BÃO HÒA KỲ VỌNG:** Nạp âm **VƯỢNG** hoặc Ngành **VƯỢNG**. Cạn tiền đẩy mới, chỉ canh chốt lời.
-            *   **🐢 CHẬM CHẠP / LỠ SÓNG:** Ngành **TƯỚNG**. Tiền đầu cơ không vào ngành phòng thủ, lỡ nhịp thị trường.
-            """)
+    with st.expander("📚 BÍ KÍP ĐỌC TRẬN ĐỒ: HỆ THỐNG CHẤM ĐIỂM 3 MÀU (CLICK ĐỂ XEM)"):
+        st.markdown("""
+        **Hệ thống chấm điểm tuyệt đối (từ -6 đến +6) dựa trên 4 biến số cốt lõi:**
+        *   **🟢 ĐÈN XANH (Điểm >= 2):** Vĩ mô tốt + Quẻ Cát + Hành tương sinh. Tín hiệu **MUA / GIA TĂNG TỶ TRỌNG**.
+        *   **🟡 ĐÈN VÀNG (-1.5 < Điểm < 2):** Vĩ mô trung bình hoặc xung đột Quẻ/Hành. Tín hiệu **TIẾP TỤC NẮM GIỮ / ĐỨNG NGOÀI**. Tuyệt đối không mua mới.
+        *   **🔴 ĐÈN ĐỎ (Điểm <= -1.5):** Vĩ mô xấu + Quẻ Hung. Tín hiệu **BÁN NGAY LẬP TỨC / TRÁNH XA**. Không quan tâm hỗ trợ kỹ thuật.
+        """)
     
     co_so = que_ln_num + 2
     rows = []
@@ -480,30 +469,36 @@ if st.sidebar.button("Phân Tích Cổ Phiếu", type="primary", use_container_w
         qt = (co_so + month) % 64 or 64
         q_qual = que_quality(qt)
         
-        # KÍCH HOẠT LAYER 2: LOGIC KHUYẾN NGHỊ TÍCH HỢP DUAL-FILTER
-        recommendation = "➖ Quan sát"
-        if "Down-trend" in market_mode:
-            if q_qual in ["Đại Hung", "Hung"]:
-                recommendation = "🛑 CẮT MÁU / THÁO CHẠY (Thủng đáy)"
-            elif sk_nap_am == "TỬ":
-                recommendation = "🛑 TRÁNH XA (Dao rơi)"
-            elif sk_nap_am == "VƯỢNG":
-                recommendation = "🟡 PHÂN PHỐI ĐỈNH (Hết vị)"
-            elif q_qual in ["Đại Cát", "Cát"] and sk_nap_am in ["TỬ", "THÔI"]:
-                recommendation = "✅ MUA GOM DEEP VALUE (Chờ V)"
-            else:
-                recommendation = "⚠️ BULL-TRAP / HỒI KỸ THUẬT"
+        # KÍCH HOẠT LAYER 2: HỆ THỐNG CHẤM ĐIỂM TUYỆT ĐỐI
+        score = 0
+        # 1. Market Mode
+        if market_mode == "Up-trend": score += 1
+        elif market_mode == "Down-trend": score -= 1
+        
+        # 2. Quẻ Tháng
+        if q_qual == "Đại Cát": score += 2
+        elif q_qual == "Cát": score += 1
+        elif q_qual == "Hung": score -= 1
+        elif q_qual == "Đại Hung": score -= 2
+        
+        # 3. Ngành
+        if sk_industry == "VƯỢNG": score += 2
+        elif sk_industry == "TƯỚNG": score += 1
+        elif sk_industry == "TÙ": score -= 1
+        elif sk_industry == "TỬ": score -= 2
+        
+        # 4. Nạp âm
+        if sk_nap_am == "VƯỢNG": score += 1
+        elif sk_nap_am == "TƯỚNG": score += 0.5
+        elif sk_nap_am == "TÙ": score -= 0.5
+        elif sk_nap_am == "TỬ": score -= 1
+
+        if score >= 2:
+            recommendation = f"🟢 ĐÈN XANH: MUA ({score}đ)"
+        elif score <= -1.5:
+            recommendation = f"🔴 ĐÈN ĐỎ: BÁN NGAY LẬP TỨC ({score}đ)"
         else:
-            if q_qual in ["Đại Hung", "Hung"]:
-                recommendation = "🌪️ BẪY RŨ BỎ / BUY-THE-DIP (Chờ Volume bùng nổ)"
-            elif sk_industry == "TÙ":
-                recommendation = "🚀 DẪN SÓNG / SIÊU ĐẦU CƠ (All-in)"
-            elif q_qual in ["Đại Cát", "Cát"] and sk_industry == "VƯỢNG":
-                recommendation = "🟡 BÃO HÒA KỲ VỌNG / CHỐT LỜI"
-            elif sk_nap_am == "TỬ":
-                recommendation = "🛑 TRÁNH XA (Lõi cực yếu)"
-            else:
-                recommendation = "✅ TÍCH LŨY / HOLD"
+            recommendation = f"🟡 ĐÈN VÀNG: TIẾP TỤC NẮM GIỮ / QUAN SÁT ({score}đ)"
                 
         rows.append({
             "Tháng (AL)" if is_lunar else "Tháng (DL)": month,
@@ -518,30 +513,16 @@ if st.sidebar.button("Phân Tích Cổ Phiếu", type="primary", use_container_w
     
     # Apply style to table for highlighting
     def color_recommendation(val):
-        # Mặc định (nếu không khớp)
         color = '#ffffff' 
-        
-        # NHÓM 1: MUA (Màu Xanh Lá)
-        if any(kw in val for kw in ["🚀", "🔥", "🌪️", "✅", "DẪN SÓNG", "ĐẦU CƠ", "BUY-THE-DIP", "MUA GOM"]):
-            color = '#00ff00' # Xanh lá (Mua)
-            
-        # NHÓM 2: BÁN (Màu Vàng)
-        elif any(kw in val for kw in ["⚠️", "🛑", "PHÂN PHỐI", "BÃO HÒA", "CẮT MÁU", "BULL-TRAP"]):
-            color = '#ffd700' # Vàng (Bán)
-            
-        # NHÓM 3: TRÁNH XA (Màu Đỏ)
-        elif any(kw in val for kw in ["➖", "🐢", "🛡️", "Quan sát", "CHẬM CHẠP", "TRÚ ẨN"]):
-            color = '#ff4b4b' # Đỏ (Tránh xa)
-            
+        if "🟢" in val: color = '#00ff00'
+        elif "🟡" in val: color = '#ffd700'
+        elif "🔴" in val: color = '#ff4b4b'
         return f'color: {color}; font-weight: bold'
         
     st.dataframe(df.style.map(color_recommendation, subset=['Khuyến Nghị (Auto)']), use_container_width=True, height=450)
     
-    st.markdown(f"> **Giải thích chiến thuật ({market_mode}):**")
-    if "Down-trend" in market_mode:
-        st.markdown("*Đội lái đánh nghịch hành: Các tháng Vượng là phân phối đỉnh. Tập trung gom hàng khi cổ phiếu chịu áp lực TỬ (khắc nhập) hoặc THÔI (sinh xuất) vào những tháng có Quẻ Cát/Trung mà giá bị đè. Bán thẳng tay khi ra Quẻ Hung mà giá bị kéo thốc (Bẫy bull-trap).*")
-    else:
-        st.markdown("*Thị trường thuận sóng lớn: Tập trung các ngành TÙ (chiếm lĩnh vĩ mô) hoặc THÔI. Mua khi có Quẻ Cát. Bán khi Quẻ Hung xuất hiện vì dòng tiền tự nhiên sẽ tháo chạy.*")
+    st.markdown("> **Khẩu Quyết Giao Dịch Bất Bại:**")
+    st.markdown("*Mua khi Xanh, Nắm giữ khi Vàng, Bán ngay khi Đỏ. Không cần quan tâm thị trường đang Uptrend hay Downtrend, điểm số Tuyệt Đối đã bao hàm tất cả!*")
     
     st.markdown("---")
     st.caption("Công cụ tính toán tự động dựa trên phân tích lượng tử kết hợp Thái Ất Dịch Lý & Tài chính hành vi (By Antigravity).")
