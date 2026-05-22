@@ -263,23 +263,34 @@ st.title("🎯 TRẬN ĐỒ MA TRẬN CK")
 
 st.sidebar.header("📥 NHẬP LIỆU CỔ PHIẾU")
 
-ticker_options = ["Tùy chỉnh (Mã khác)"] + list(PRESET_STOCKS.keys())
-selected_preset = st.sidebar.selectbox("Chọn Mã Cổ Phiếu (Top 39)", ticker_options)
+ticker = st.sidebar.text_input("Nhập Mã Cổ Phiếu (VD: HPG, VCB...)", "HPG").upper()
+use_realtime = st.sidebar.checkbox("🌐 Cập Nhật Dữ Liệu Thực Tế", value=True)
+
+default_ind = PRESET_STOCKS.get(ticker, {}).get("ind", "Khác")
+default_date = PRESET_STOCKS.get(ticker, {}).get("date", datetime.date(2018, 5, 17))
+default_time = PRESET_STOCKS.get(ticker, {}).get("time", datetime.time(9, 0))
+
+realtime_hist = None
+if use_realtime and ticker:
+    import yfinance as yf
+    try:
+        t = yf.Ticker(f"{ticker}.VN")
+        realtime_hist = t.history(period="max")
+        if not realtime_hist.empty:
+            auto_date = realtime_hist.index[0].date()
+            st.sidebar.success(f"✅ Đã kết nối Đám mây. Sàn: {auto_date}")
+            default_date = auto_date
+        else:
+            st.sidebar.warning(f"⚠️ Không có dữ liệu yfinance cho {ticker}")
+    except Exception:
+        st.sidebar.warning(f"⚠️ Lỗi kết nối yfinance cho {ticker}")
 
 industry_options = list(INDUSTRY_MAPPING.keys()) + ["Khác"]
+ind_index = industry_options.index(default_ind) if default_ind in industry_options else len(industry_options)-1
 
-if selected_preset != "Tùy chỉnh (Mã khác)":
-    ticker = selected_preset
-    preset_data = PRESET_STOCKS[ticker]
-    st.sidebar.success(f"✅ Đã tự động điền dữ liệu cho {ticker}")
-    industry = st.sidebar.selectbox("Nhóm Ngành", industry_options, index=industry_options.index(preset_data["ind"]), disabled=True)
-    first_trade_date = st.sidebar.date_input("Ngày Giao Dịch Đầu Tiên", preset_data["date"], disabled=True)
-    first_trade_time = st.sidebar.time_input("Giờ Lên Sàn", preset_data["time"], disabled=True)
-else:
-    ticker = st.sidebar.text_input("Nhập Mã Cổ Phiếu", "VHM").upper()
-    industry = st.sidebar.selectbox("Nhóm Ngành", industry_options, index=industry_options.index("Bất động sản"))
-    first_trade_date = st.sidebar.date_input("Ngày Giao Dịch Đầu Tiên", datetime.date(2018, 5, 17))
-    first_trade_time = st.sidebar.time_input("Giờ Lên Sàn", datetime.time(9, 0))
+industry = st.sidebar.selectbox("Nhóm Ngành", industry_options, index=ind_index)
+first_trade_date = st.sidebar.date_input("Ngày Giao Dịch Đầu Tiên", default_date)
+first_trade_time = st.sidebar.time_input("Giờ Lên Sàn", default_time)
 
 if industry == "Khác":
     custom_hanh = st.sidebar.selectbox("Tự chọn Hành Ngành", ["Kim", "Thủy", "Mộc", "Hỏa", "Thổ"])
@@ -333,6 +344,18 @@ else: # Hung, Đại Hung
 
 st.sidebar.markdown("---")
 if st.sidebar.button("Phân Tích Cổ Phiếu", type="primary", use_container_width=True):
+    if use_realtime and realtime_hist is not None and not realtime_hist.empty:
+        st.subheader(f"📊 DỮ LIỆU THỰC TẾ: {ticker} (BETA)")
+        last_close = realtime_hist['Close'].iloc[-1]
+        prev_close = realtime_hist['Close'].iloc[-2] if len(realtime_hist) > 1 else last_close
+        pct_change = ((last_close - prev_close) / prev_close) * 100
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Giá Hiện Tại (VND)", f"{last_close:,.0f}", f"{pct_change:+.2f}%")
+        
+        st.line_chart(realtime_hist['Close'].tail(90))
+        st.markdown("---")
+        
     # Tính Bát tự & Bản mệnh
     dt_trade = datetime.datetime.combine(first_trade_date, first_trade_time)
     bt = calc.calculate_bat_tu(dt_trade)

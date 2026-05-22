@@ -2,3 +2,4 @@ streamlit
 pandas
 borax
 openpyxl
+yfinance
